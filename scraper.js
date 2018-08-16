@@ -67,6 +67,7 @@ request('http://shirts4mike.com/shirts.php', function(error, response, html) {
     // Call requests on each product pages
     linksArr.forEach(link => {
       let productData = productRequest(link);
+      console.log(productData);
     });
   }
 });
