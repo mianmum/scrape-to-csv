@@ -23,19 +23,25 @@ function productRequest(uri) {
   rp(options)
     .then($ => {
       productData = {
-          title : $('div.shirt-details > h1')
-            .contents()
-            .filter(function() {
-              return this.nodeType == 3;
-            })
-            .text()
-            .slice(1),
-          price : $('div.shirt-details > h1 > span.price').text(),
-          imageUrl : $('div.shirt-picture > span > img').attr('src'),
-          url : options.uri
+          "title" :
+            $('div.shirt-details > h1')
+              .contents()
+              .filter(function() {
+                return this.nodeType == 3;
+              })
+              .text()
+              .slice(1),
+          "price" : $('div.shirt-details > h1 > span.price').text(),
+          "imageURL" : $('div.shirt-picture > span > img').attr('src'),
+          "URL" : options.uri
       };
+      return productData;
     })
-    .then(console.log(productData))
+    .then(data => {
+      console.log(data);
+      const csv = json2csvParser.parse(data);
+      console.log(csv);
+    })
     .catch(err => {
       console.log(err);
     });
@@ -55,10 +61,11 @@ function masterRequest() {
     const $productLinks = $('div.shirts').find('a');
     $productLinks.each(i => uriArr[i] = $productLinks[`${i}`].attribs.href);
   })
-  .then($ => console.log(uriArr))
   .then($ =>  {
     uriArr.forEach(productURI => productRequest(productURI))
   })
-  // .then($ => console.log(productArr))
+  .then($ => {
+
+  })
 };
 masterRequest();
