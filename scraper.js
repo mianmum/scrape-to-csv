@@ -1,8 +1,11 @@
 // Module requirements
+const fs = require('fs');
+const path = require('path');
 const request = require('request');
 const cheerio = require('cheerio');
 const rp = require('request-promise');
 const Json2csvParser = require('json2csv').Parser;
+
 // Create CSV Parser
 const fields = ['Title', 'Price', 'ImageURL', 'URL', 'Time'];
 const json2csvParser = new Json2csvParser({ fields });
@@ -10,8 +13,38 @@ const json2csvParser = new Json2csvParser({ fields });
 // Array to hold product URIs
 let uriArr = [];
 // Array to hold product data
-let productArr = []
-let productData;
+let productArr = [];
+// global index counter
+let n = 0;
+
+// Create date object
+const date = new Date();
+
+// Delete Old Data Files
+function removeFiles() {
+  const directory = 'data';
+  fs.readdir(directory, (err, files) => {
+    if (err) handle(err);
+
+    for (const file of files) {
+      fs.unlink(path.join(directory, file), err => {
+        if (err) handle(err);
+        console.log('old files were deleted');
+      });
+    }
+  });
+}
+
+// Check for data directory and create one if it doesn't exist
+if (fs.existsSync('data')) {
+  console.log('There is a data directory');
+  //Remove old files:
+  removeFiles();
+} else {
+  fs.mkdirSync('data');
+  console.log('Data directory created!');
+}
+
 // Individual product request function
 function productRequest(uri) {
   let options = {
@@ -22,8 +55,8 @@ function productRequest(uri) {
   };
   rp(options)
     .then($ => {
-      productData = {
-          "title" :
+      let productData = {
+          "Title" :
             $('div.shirt-details > h1')
               .contents()
               .filter(function() {
@@ -31,22 +64,28 @@ function productRequest(uri) {
               })
               .text()
               .slice(1),
-          "price" : $('div.shirt-details > h1 > span.price').text(),
-          "imageURL" : $('div.shirt-picture > span > img').attr('src'),
-          "URL" : options.uri
+          "Price" : $('div.shirt-details > h1 > span.price').text(),
+          "ImageURL" : $('div.shirt-picture > span > img').attr('src'),
+          "URL" : options.uri,
+          "Time" : `${date.getHours()}:${date.getMinutes()}`
       };
-      return productData;
+      productArr.push(productData);
+      if (n < (uriArr.length - 1)) {
+        n ++;
+        productRequest(uriArr[n]);
+      } else {
+        let csvData = json2csvParser.parse(productArr);
+        fs.writeFile(`data/${date.getYear()}-${date.getMonth() + 1}-${date.getDate()}.csv`, csvData, 'utf8', err => {
+          if (err) {
+            console.log('There was an error writing the file.');
+          } else {
+            console.log('File written and saved.');
+          };
+        })
+      };
     })
-    .then(data => {
-      console.log(data);
-      const csv = json2csvParser.parse(data);
-      console.log(csv);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-}
-// productRequest('shirt.php?id=101');
+    .catch(err => console.log('There was an error; execution incomplete.'))
+};
 
 // Master request function
 function masterRequest() {
@@ -60,12 +99,8 @@ function masterRequest() {
   .then($ => {
     const $productLinks = $('div.shirts').find('a');
     $productLinks.each(i => uriArr[i] = $productLinks[`${i}`].attribs.href);
+    productRequest(uriArr[n]);
   })
-  .then($ =>  {
-    uriArr.forEach(productURI => productRequest(productURI))
-  })
-  .then($ => {
-
-  })
-};
+  .catch(err => console.log('There was an error; execution incomplete.'))
+}
 masterRequest();
