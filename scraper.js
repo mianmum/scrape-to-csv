@@ -19,6 +19,44 @@ let n = 0;
 
 // Create date object
 const date = new Date();
+// Print formatted date
+function printDate() {
+  const year = date.getFullYear();
+  const month = function() {
+    if (date.getMonth() < 9) {
+      return `0${date.getMonth() + 1}`;
+    } else {
+      return date.getMonth() + 1;
+    }
+  };
+  const day = function() {
+    if (date.getDate() < 10) {
+      return `0${date.getDate()}`;
+    } else {
+      return date.getDate();
+    }
+  };
+  return `${year}-${month()}-${day()}`
+};
+// Print formatted time
+function printTime() {
+  const hour = function() {
+    if (date.getHours() < 10) {
+      return `0${date.getHours()}`;
+    } else {
+      return date.getHours();
+    }
+  };
+  const minutes = function() {
+    if (date.getMinutes() < 10) {
+      return `0${date.getMinutes()}`;
+    } else {
+      return date.getMinutes();
+    }
+  };
+  return `${hour()}:${minutes()}`;
+};
+
 
 // Delete Old Data Files
 function removeFiles() {
@@ -75,7 +113,7 @@ function productRequest(uri) {
         productRequest(uriArr[n]);
       } else {
         let csvData = json2csvParser.parse(productArr);
-        fs.writeFile(`data/${date.getYear()}-${date.getMonth() + 1}-${date.getDate()}.csv`, csvData, 'utf8', err => {
+        fs.writeFile(`data/${printDate()}.csv`, csvData, 'utf8', err => {
           if (err) {
             console.log('There was an error writing the file.');
           } else {
@@ -84,13 +122,13 @@ function productRequest(uri) {
         })
       };
     })
-    .catch(err => console.log('There was an error; execution incomplete.'))
+    .catch(err => console.log(`There was a ${err.statusCode} error. Execution incomplete.`))
 };
 
 // Master request function
 function masterRequest() {
   let options = {
-    uri: 'http://www.shirts4mike.com/shirts.php',
+    uri: 'http://www.shirts4mike.com/shirts.php1111',
     transform: function (body) {
       return cheerio.load(body);
     }
@@ -101,6 +139,6 @@ function masterRequest() {
     $productLinks.each(i => uriArr[i] = $productLinks[`${i}`].attribs.href);
     productRequest(uriArr[n]);
   })
-  .catch(err => console.log('There was an error; execution incomplete.'))
+  .catch(err => console.log(`There was a ${err.statusCode} error. Execution incomplete.`))
 }
 masterRequest();
