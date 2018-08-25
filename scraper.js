@@ -128,7 +128,7 @@ function productRequest(uri) {
 // Master request function
 function masterRequest() {
   let options = {
-    uri: 'http://www.shirts4mike.com/shirts.php1111',
+    uri: 'http://www.shirts4mike.com/shirts.php',
     transform: function (body) {
       return cheerio.load(body);
     }
